@@ -1,8 +1,13 @@
 const bcrypt = require("bcrypt");
 const { validationResult } = require("express-validator");
-const { mongoose } = require("mongoose");
-const User = mongoose.model("User");
+const mongoose = require("mongoose");
 const mappedUser = require("../helpers/reqMapper");
+const md5 = require("md5");
+const jwt = require("jsonwebtoken");
+
+const User = require("../models/userSchema");
+const Address = require("../models/addressSchema");
+const AccessToken = require("../models/accessTokenSechma");
 
 const registerController = async (req, res) => {
   const errors = validationResult(req);
@@ -142,7 +147,19 @@ const loginController = async (req, res) => {
       .status(404)
       .json({ code: "User-Not-Found", error: "User not found" });
   }
-  const access_token = existUserName._id.toString();
+
+  const token = await jwt.sign(
+    { _id: existUserName._id },
+    process.env.JWT_SECRET_KEY
+  );
+
+  // const access_token = md5(existUserName._id.toString());
+  const accesstoken = new AccessToken();
+  accesstoken.userId = existUserName._id;
+  accesstoken.accessToken = token;
+
+  await accesstoken.save();
+
   const comparePassword = await bcrypt.compare(
     password,
     existUserName.password
@@ -156,7 +173,7 @@ const loginController = async (req, res) => {
   return res.status(200).json({
     code: "Success",
     message: "Login successfully",
-    data: { access_token },
+    data: { token },
   });
 };
 
@@ -165,15 +182,20 @@ const getUser = async (req, res) => {
     const existUser = await User.findById({ _id: req.User._id }).select({
       password: 0,
     });
+
     if (!existUser) {
       return res
         .status(400)
         .json({ code: "User-Not-Found", error: "User does not exists " });
     }
+
+    const address = await Address.find({ user_id: existUser._id });
+    existUser.address = address;
+
     return res.status(200).json({
       code: "Success",
       message: "User exists",
-      user: existUser,
+      user: { existUser },
     });
   } catch (error) {
     console.error(error.toString());
@@ -239,10 +261,96 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const createAddress = async (req, res) => {
+  try {
+    const { address, city, state, pin_code, phone_no } = req.body;
+    const userId = req.User._id;
+
+    if (!address || !city || !state || !pin_code || !phone_no) {
+      return res
+        .status(400)
+        .json({ code: "Invalid_Input", error: "Please fill all feilds" });
+    }
+    const newAddress = new Address({
+      user_id: userId,
+      address,
+      city,
+      state,
+      pin_code,
+      phone_no,
+    });
+
+    const savedAddress = await newAddress.save();
+
+    await User.findByIdAndUpdate(
+      userId,
+      { $push: { addresses: savedAddress._id } },
+      { new: true, upsert: true }
+    );
+
+    res.json({ code: "Address-Created-Successfully", data: newAddress });
+  } catch (error) {
+    console.error(error.toString());
+  }
+};
+
+const getUserWithId = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existUser = await User.findById(id).populate("addresses", "address");
+    console.log(existUser);
+    return res.status(200).json({
+      code: "Valid-User",
+      message: "User exist in this id",
+      existUser,
+    });
+  } catch (error) {
+    console.error(error.toString());
+    return res
+      .status(400)
+      .json({ code: "Invalid-User", error: "User not found" });
+  }
+};
+
+const deleteAddress = async (req, res) => {
+  try {
+    const userId = req.User._id;
+    const address = req.User.addresses.toString();
+    const addressArray = address.split(",");
+    const deleteaddress = await Address.deleteMany({
+      _id: { $in: addressArray },
+    });
+    const userUpdateResult = await User.updateOne(
+      { _id: userId },
+      { $pull: { addresses: { $in: addressArray } } }
+    );
+    if (!deleteaddress) {
+      return res.status(200).json({
+        code: "Address-Deletion-Failed",
+        message: "Address deletion failed or user not updated",
+      });
+    }
+    return res.status(200).json({
+      code: "Deletion-Successfully",
+      message: "User Address Deleted successfully",
+    });
+    console.log(deleteaddress);
+  } catch (error) {
+    console.log(error.toString());
+    return res
+      .status(400)
+      .json({ code: "Something-Went-Wrong", message: "Deletion is not done" });
+  }
+};
+
 module.exports = {
   registerController,
   loginController,
   getUser,
   getUsers,
   deleteUser,
+  createAddress,
+  getUserWithId,
+  deleteAddress,
 };
