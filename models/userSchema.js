@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { ObjectId } = mongoose.Schema.Types;
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -23,6 +24,23 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  addresses: [
+    {
+      type: ObjectId,
+      ref: "Address",
+    },
+  ],
+  resetToken: {
+    type: String,
+    default: "",
+  },
+  files: [
+    {
+      type: String,
+      default: "",
+    },
+  ],
 });
 
-mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+module.exports = User;
