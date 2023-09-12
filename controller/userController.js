@@ -70,63 +70,6 @@ const registerController = async (req, res) => {
   }
 };
 
-// const registerController = async (req, res) => {
-//   const { firstName, lastName, userName, email, password, confirmPassword } =
-//     req.body;
-//   if (
-//     !firstName ||
-//     !lastName ||
-//     !userName ||
-//     !email ||
-//     !password ||
-//     !confirmPassword
-//   ) {
-//     return res
-//       .status(422)
-//       .json({ code: "Invalid-Input", error: "Please fill all feilds" });
-//   }
-
-//   const existEmail = await User.findOne({ email });
-//   const existUserName = await User.findOne({ userName });
-//   if (existEmail) {
-//     return res
-//       .status(400)
-//       .json({ code: "Invalid-Input", error: "Email already exists!!" });
-//   }
-//   if (existUserName) {
-//     return res
-//       .status(400)
-//       .json({ code: "Invalid-Input", error: "Username already exists!!" });
-//   }
-//   const salt = 10;
-//   const hashPassword = await bcrypt.hash(password, salt);
-//   if (password !== confirmPassword) {
-//     return res.status(400).json({
-//       code: "Invalid-Input",
-//       error: "Password and Confirm Password does't matched !!",
-//     });
-//   }
-//   const newUser = new User({
-//     firstName,
-//     lastName,
-//     userName,
-//     email,
-//     password: hashPassword,
-//   });
-
-//   const saveUser = await newUser.save();
-//   delete saveUser.password;
-
-//   if (!saveUser) {
-//     return res
-//       .status(400)
-//       .json({ code: "", error: "Something went wrong while register user" });
-//   }
-//   return res.status(200).json({
-//     message: "User Register Successfully !!",
-//     User: mappedUser(saveUser),
-//   });
-// };
 
 const loginController = async (req, res) => {
   const { userName, password } = req.body;
