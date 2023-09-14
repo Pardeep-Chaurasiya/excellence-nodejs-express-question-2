@@ -1,10 +1,10 @@
-const express = require("express")
-const authMiddleware = require("../middleware/authMiddleware")
-const addressController = require("../controller/addressController")
+const express = require('express');
+const authMiddleware = require('../middleware/authMiddleware');
+const addressController = require('../controller/addressController');
 
-const router = express.Router()
+const router = express.Router();
 
-router.post("/user/address", authMiddleware, addressController.createAddress);
-router.delete("/user/address", authMiddleware, addressController.deleteAddress);
+router.post('/user/address', authMiddleware, addressController.createAddress);
+router.delete('/user/address', authMiddleware, addressController.deleteAddress);
 
 module.exports = router;
