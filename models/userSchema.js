@@ -1,5 +1,4 @@
-const mongoose = require('mongoose');
-
+const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 
 const userSchema = new mongoose.Schema({
@@ -28,20 +27,20 @@ const userSchema = new mongoose.Schema({
   addresses: [
     {
       type: ObjectId,
-      ref: 'Address',
+      ref: "Address",
     },
   ],
   resetToken: {
     type: String,
-    default: '',
+    default: "",
   },
   files: [
     {
       type: String,
-      default: '',
+      default: "",
     },
   ],
 });
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 module.exports = User;
